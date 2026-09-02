@@ -1,6 +1,6 @@
 # Common Exposure
 
-A small Python script that compares the constituent holdings of two ETFs (or index funds) and calculates their **common exposure** This is the portion of your portfolio that would be duplicated if you held both funds.
+A small Python script that compares the constituent holdings of two ETFs (or index funds) and calculates their **common exposure** This is the portion of your portfolio that would be duplicated if you held both funds. Specific for Xtrackers!
 
 ## Overview
 
@@ -10,8 +10,9 @@ A small Python script that compares the constituent holdings of two ETFs (or ind
 - Each constituent's weighting in ETF1 and ETF2
 - The **overlap** per constituent, defined as `min(weight_in_ETF1, weight_in_ETF2)` — i.e. the smaller of the two weightings, since that's the portion of exposure common to both funds
 - A summary with the total number of overlapping constituents and the **total common exposure** (sum of all overlaps)
+- A regional breakdown (`Region.md`) of each fund's weighting by country, rolled up into US / Europe / Rest, independent of the ISIN matching above
 
-Results are written to both a Markdown table (`Overlap.md`) and an Excel file (`Overlap.xlsx`), and a summary is printed to the console.
+Results are written to a Markdown table (`Overlap.md`), an Excel file (`Overlap.xlsx`), and a regional breakdown (`Region.md`), and a summary is printed to the console.
 
 The script also includes a few safety checks:
 
@@ -41,6 +42,7 @@ ETF1_FILE = './constituents/Constituent_LU0592216393.xlsx'
 ETF2_FILE = './constituents/Constituent_LU0274209237.xlsx'
 OUTPUT_MD_FILE = 'Overlap.md'
 OUTPUT_XLSX_FILE = 'Overlap.xlsx'
+OUTPUT_REGION_MD_FILE = 'Region.md'
 
 # Number of rows to skip before the header row (0-indexed) for each ETF file
 ETF1_SKIP_ROWS = 3
@@ -48,11 +50,24 @@ ETF2_SKIP_ROWS = 3
 
 # Set to True if weightings are stored as decimals (0.05 = 5%), False if already percentages
 WEIGHTINGS_AS_DECIMALS = True
+
+# Country names (as they appear in the Xtrackers 'Country' column) counted as
+# "Europe" in the US / Europe / Rest summary in Region.md.
+EUROPE_COUNTRIES = [
+    'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic',
+    'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary',
+    'Iceland', 'Ireland', 'Italy', 'Latvia', 'Liechtenstein', 'Lithuania',
+    'Luxembourg', 'Malta', 'Netherlands', 'Norway', 'Poland', 'Portugal',
+    'Romania', 'Serbia', 'Slovakia', 'Slovenia', 'Spain', 'Sweden',
+    'Switzerland', 'Ukraine', 'United Kingdom',
+]
 ```
 
    - `ETF1_SKIP_ROWS` / `ETF2_SKIP_ROWS`: many providers prepend a few title/metadata rows before the actual header row — set this to however many rows need to be skipped for each file.
    - `WEIGHTINGS_AS_DECIMALS`: set to `True` if the weighting column contains values like `0.0523`, or `False` if it already contains `5.23`.
    - Each input file must contain columns named `Name`, `ISIN`, and `Weighting` (after skipping rows) — rename columns in the source file if they differ.
+   - The regional breakdown additionally uses a `Country` column, which Xtrackers constituent files include by default. If a file lacks it, the region breakdown is skipped (with a console message) but the ISIN overlap analysis still runs.
+   - `EUROPE_COUNTRIES`: check this against the countries that show up in `Region.md` and adjust if you want a country classified differently (e.g. moved between "Europe" and "Rest").
 
 3. Run the script:
 
@@ -69,6 +84,7 @@ Reading ./constituents/Constituent_LU0274209237.xlsx (skipping 3 rows)...
 Found 187 overlapping constituents.
 Successfully saved overlap data to: Overlap.xlsx
 Successfully saved overlap data to: Overlap.md
+Successfully saved region breakdown to: Region.md
 
 --- Summary Report ---
 ETF1: LU0592216393
@@ -83,6 +99,15 @@ Total Common Exposure: 39.87%
 ```
 
 `Overlap.md` and `Overlap.xlsx` will each contain the full per-constituent breakdown (name, ISIN, weighting in each ETF, and overlap) sorted by overlap, descending, plus the summary table.
+
+### Weighting by region
+
+The Xtrackers constituent format carries a `Country` column per holding, so `Region.md` doesn't need any of the ISIN matching used above — it's a plain per-file groupby-sum on that column, outer-joined between the two funds:
+
+- One row per country that appears in either fund, with each fund's total weighting in that country and the overlap (`min` of the two).
+- A `## Summary: US / Europe / Rest` table underneath, rolling the same numbers up into three groups plus a `Total` row. Which countries count as "Europe" is controlled by the `EUROPE_COUNTRIES` list in the configuration block — check it against the countries you actually see in the per-region table and adjust if a country you care about is missing or misclassified.
+
+Because this report is independent of the ISIN matching, its overlap numbers aren't directly comparable to `Overlap.md`'s — regional overlap only requires both funds to hold *something* in a country, not the same company, so it will generally be much higher than the holdings-level total common exposure.
 
 ### Analyzing a different pair of ETFs
 
