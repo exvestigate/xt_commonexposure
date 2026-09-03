@@ -102,6 +102,20 @@ def _summary_to_markdown(summary):
     return '\n'.join(lines) + '\n'
 
 
+def _format_percent_columns(df, cols):
+    """Return a copy of df with the given columns rendered as '12.34%' strings.
+
+    Respects WEIGHTINGS_AS_DECIMALS the same way _build_summary does: values
+    are only scaled by 100 when they're stored as decimals (0.05 = 5%); if
+    the source file already stores plain percentages, they're just formatted.
+    """
+    multiplier = 100 if WEIGHTINGS_AS_DECIMALS else 1
+    df = df.copy()
+    for col in cols:
+        df[col] = df[col].apply(lambda x: f'{multiplier * x:.2f}%')
+    return df
+
+
 def _build_region_overlap(df1, df2):
     """Sum each fund's own weightings per country and compute the overlap.
 
@@ -262,12 +276,13 @@ def analyze_etf_overlap(etf1_path, etf1_skip_rows, etf2_path, etf2_skip_rows, md
         try:
             region_df = _build_region_overlap(df1, df2)
             group_df = _build_region_group_summary(df1, df2, EUROPE_COUNTRIES)
+            pct_cols = [f'{WEIGHTING_COL}_ETF1', f'{WEIGHTING_COL}_ETF2', OVERLAP_COL]
             with open(region_output_path, 'w') as f:
                 f.write(f'# Weighting by Region: {etf1_label} vs {etf2_label}\n\n')
-                f.write(region_df.to_markdown(index=False))
+                f.write(_format_percent_columns(region_df, pct_cols).to_markdown(index=False))
                 f.write('\n\n')
                 f.write('## Summary: US / Europe / Rest\n\n')
-                f.write(group_df.to_markdown(index=False))
+                f.write(_format_percent_columns(group_df, pct_cols).to_markdown(index=False))
                 f.write('\n')
             print(f"Successfully saved region breakdown to: {region_output_path}")
         except Exception as e:

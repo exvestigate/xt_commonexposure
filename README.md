@@ -104,8 +104,10 @@ Total Common Exposure: 39.87%
 
 The Xtrackers constituent format carries a `Country` column per holding, so `Region.md` doesn't need any of the ISIN matching used above — it's a plain per-file groupby-sum on that column, outer-joined between the two funds:
 
-- One row per country that appears in either fund, with each fund's total weighting in that country and the overlap (`min` of the two).
+- One row per country that appears in either fund, with each fund's total weighting in that country and the overlap (`min` of the two), formatted as a percentage with 2 decimals (e.g. `19.97%`).
 - A `## Summary: US / Europe / Rest` table underneath, rolling the same numbers up into three groups plus a `Total` row. Which countries count as "Europe" is controlled by the `EUROPE_COUNTRIES` list in the configuration block — check it against the countries you actually see in the per-region table and adjust if a country you care about is missing or misclassified.
+
+Both tables are built from each fund's complete holdings (after dedup, no other filtering), so the `Total` row sums to 100.00% for both funds since nothing is excluded before the region groupby.
 
 Because this report is independent of the ISIN matching, its overlap numbers aren't directly comparable to `Overlap.md`'s — regional overlap only requires both funds to hold *something* in a country, not the same company, so it will generally be much higher than the holdings-level total common exposure.
 
