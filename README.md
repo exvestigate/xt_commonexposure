@@ -122,3 +122,9 @@ Released under [The Unlicense](LICENSE) — public domain, do whatever you want 
 ## A note on authorship
 
 This code was primarily generated with **Google Gemini**. It has been reviewed, but treat it with the same scrutiny you'd give any AI-generated financial tooling — check that the overlap definition matches your intent and always sanity-check the totals against the underlying source data before relying on the numbers.
+
+## Disclaimer
+
+**Not Financial Advice:** This repository and its contents are for educational, research, and informational purposes only. Nothing contained in this codebase constitutes investment, legal, or tax advice. Standard financial analysis code may contain bugs or inaccuracies; do not rely on it to make actual financial decisions.
+
+**Data & Trademarks:** This project does not host, store, or redistribute proprietary market data. All product names, trademarks, ticker symbols, and registered trademarks mentioned within this codebase belong to their respective holders (e.g., Vanguard, BlackRock, State Street, Xtrackers). Reference to them does not imply any affiliation with or endorsement by them.
